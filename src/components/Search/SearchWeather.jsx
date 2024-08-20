@@ -12,25 +12,30 @@ const SearchCity = () => {
   const dispatch = useDispatch();
   const recentSearches = useSelector((state) => state.searchHistory);
 
-  const { data } = useGetLocationDataQuery(city, {
+  const { data, error, isFetching:isLoading } = useGetLocationDataQuery(city, {
     skip: !triggerSearch,
   });
 
-  useEffect(() => {
-    if (data && data.length > 0) {
-      const { lat, lon } = data[0];
-      dispatch(setCoordinates({ lat, lon, cityName: city.trim() }));
-      setTriggerSearch(false);
-      setShowRecent(false); // Hide recent searches dropdown after a successful search
-    }
-  }, [data, dispatch]);
 
   const handleSearch = () => {
     if (city.trim().length >= 3 && !recentSearches.includes(city.trim())) {
       setTriggerSearch(true);
-      dispatch(addSearch(city.trim()));
     }
   };
+  
+  useEffect(() => {
+    if (triggerSearch) {
+      if (!isLoading && !error && data && data.length > 0) {
+        const { lat, lon } = data[0];
+        dispatch(setCoordinates({ lat, lon, cityName: data[0].name }));
+        dispatch(addSearch(data[0].name));
+        setShowRecent(false);
+        setTriggerSearch(false);  
+    }
+    }
+  }, [data, isLoading, error, triggerSearch, dispatch]);
+  
+  
 
   const handleRecentSearchClick = (search) => {
     setCity(search);
